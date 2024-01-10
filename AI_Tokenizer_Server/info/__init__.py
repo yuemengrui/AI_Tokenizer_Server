@@ -1,6 +1,6 @@
 # *_*coding:utf-8 *_*
 import time
-from configs import CHINESE_WORD_SEGMENTATION_MODEL_PATH
+from configs import CHINESE_WORD_SEGMENTATION_MODEL_PATH, KEYEDVECTORS_MODEL_PATH
 from mylogger import logger
 from fastapi.requests import Request
 from starlette.middleware.cors import CORSMiddleware
@@ -18,7 +18,7 @@ from gensim.models.keyedvectors import KeyedVectors
 limiter = Limiter(key_func=lambda *args, **kwargs: '127.0.0.1')
 
 chinese_word_seg_model = ChineseWordSegmentation(CHINESE_WORD_SEGMENTATION_MODEL_PATH)
-keyed_vec_model = KeyedVectors.load_word2vec_format("/Users/yuemengrui/Data/LLM/word2vec/sgns.merge.bigram.bz2")
+keyed_vec_model = KeyedVectors.load_word2vec_format(KEYEDVECTORS_MODEL_PATH)
 
 
 def app_registry(app):
