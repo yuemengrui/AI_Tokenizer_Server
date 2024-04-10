@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 import os
+import json
 import functools
 from typing import Any, Dict, List, Union, Iterable
 import torch
@@ -270,8 +271,10 @@ class ChineseWordSegmentation:
     def __init__(self, model_name_or_path, device='cuda', **kwargs):
         self.dict_force = TrieDict()
         self.dict_combine = TrieDict()
+        self.keywords_path = os.path.join(model_name_or_path, 'keywords.json')
         self.stop_words_path = os.path.join(model_name_or_path, 'stop_words.txt')
         self.stop_words = self._load_stop_words()
+        self._load_keywords()
         self._tokenizer_transform = None
         self.config = SerializableDict(**kwargs)
         self.vocabs = VocabDict()
@@ -294,6 +297,32 @@ class ChineseWordSegmentation:
             with open(self.stop_words_path, 'w', encoding='utf-8') as f:
                 for i in self.stop_words:
                     f.write(i + '\n')
+        except Exception as e:
+            logger.error({'EXCEPTION': e})
+
+    def _load_keywords(self):
+        try:
+            with open(self.keywords_path, 'r') as f:
+                keywords_list = json.load(f)
+
+            if isinstance(keywords_list, list):
+                self.add_keywords_combine(keywords_list=keywords_list)
+        except Exception as e:
+            logger.error({'EXCEPTION': e})
+
+    def _save_keywords(self, keywords_list):
+        try:
+            old_keywords_list = []
+            if os.path.exists(self.keywords_path):
+                with open(self.keywords_path, 'r') as f:
+                    old_keywords_list = json.load(f)
+
+            for kw in keywords_list:
+                if kw not in old_keywords_list:
+                    old_keywords_list.append(kw)
+
+            with open(self.keywords_path, 'w', encoding='utf-8') as ff:
+                json.dump(old_keywords_list, ff, ensure_ascii=False)
         except Exception as e:
             logger.error({'EXCEPTION': e})
 
@@ -331,6 +360,7 @@ class ChineseWordSegmentation:
             self.dict_combine = TrieDict()
 
         self.dict_combine.update({k: True for k in set(keywords_list)})
+        self._save_keywords(keywords_list)
 
     def decode_output(self, logits, mask, batch):
         if self.config.get('crf', False):
